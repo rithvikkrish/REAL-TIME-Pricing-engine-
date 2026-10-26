@@ -195,7 +195,9 @@ export class UpstreamClient extends EventEmitter {
 
   private handleError(err: Error): void {
     logger.warn({ err: err.message }, 'Upstream WebSocket client error');
-    this.emit('error', err);
+    if (this.listenerCount('error') > 0) {
+      this.emit('error', err);
+    }
   }
 
   private scheduleReconnect(): void {

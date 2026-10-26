@@ -97,6 +97,15 @@ export class Application {
         logger.warn({ err: err.message, symbol: update.symbol }, 'Failed to save observation');
       });
     });
+
+    // Handle upstream client errors so EventEmitter never throws unhandled exception
+    this.upstreamClient.on('error', (err) => {
+      logger.warn({ err: err.message }, 'Upstream client network error encountered (safely handled)');
+    });
+
+    this.upstreamClient.on('auth_error', (err) => {
+      logger.warn({ err: err.message }, 'Upstream client authentication error encountered (safely handled)');
+    });
   }
 
   public async initialize(): Promise<void> {
