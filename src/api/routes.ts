@@ -73,6 +73,25 @@ export function buildRoutes(
       return snapshot;
     });
 
+    // OHLC Candles (Bonus Requirement)
+    app.get<{ Params: { symbol: string } }>('/api/prices/:symbol/candles', async (req, reply) => {
+      const symbol = req.params.symbol.toUpperCase().trim();
+      if (!isValidSymbol(symbol)) {
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: `Symbol '${symbol}' is not supported`,
+        });
+      }
+
+      const candles = processor.getCandles(symbol);
+      return {
+        symbol,
+        interval: '1m',
+        candleCount: candles.length,
+        candles,
+      };
+    });
+
     // Simulation toggle routes
     app.post('/api/simulate/start', async () => {
       if (simulator) {

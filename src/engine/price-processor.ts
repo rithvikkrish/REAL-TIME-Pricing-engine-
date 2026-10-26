@@ -9,6 +9,8 @@ import { incomingTicksTotal, processingLatency } from '../metrics/prometheus';
 import { roundTo } from '../utils/math';
 import { logger } from '../utils/logger';
 
+import { CandleManager, Candle } from './candles';
+
 export interface ProcessorOptions {
   windowMs?: number;
   spikeThresholdPercent?: number;
@@ -21,6 +23,7 @@ export class PriceProcessor extends EventEmitter {
   private orderManager: OrderManager;
   private windows: Map<string, SymbolRollingWindow> = new Map();
   private latestSnapshots: Map<string, Symbol24hSnapshot> = new Map();
+  private candleManager: CandleManager = new CandleManager();
   private windowMs: number;
 
   constructor(options: ProcessorOptions = {}) {
@@ -128,9 +131,16 @@ export class PriceProcessor extends EventEmitter {
       this.latestSnapshots.set(tick.symbol, snapshot);
     }
 
+    // Update OHLC candle (Bonus Requirement)
+    this.candleManager.addPrice(tick.symbol, stats.midpoint, tick.sourceTimestamp);
+
     this.emit('price_update', normalized);
 
     return normalized;
+  }
+
+  public getCandles(symbol: string): Candle[] {
+    return this.candleManager.getCandles(symbol);
   }
 
   public getSnapshot(symbol: string): Symbol24hSnapshot | undefined {
