@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "smoke": "tsx src/scripts/smoke-test.ts",
     "benchmark": "tsx src/scripts/benchmark.ts",
-    "client:demo": "tsx src/scripts/client-demo.ts"
+    "client:demo": "tsx src/scripts/client-demo.ts",
+    "stream": "tsx src/scripts/stream-dashboard.ts"
   },
   "keywords": [
     "market-data",

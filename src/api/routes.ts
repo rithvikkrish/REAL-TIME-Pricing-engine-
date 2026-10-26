@@ -1,17 +1,29 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { HealthService } from './health';
 import { PriceProcessor } from '../engine/price-processor';
+import { FeedSimulator } from '../engine/feed-simulator';
 import { register } from '../metrics/prometheus';
 import { openApiSpec } from './openapi';
+import { DASHBOARD_HTML } from './dashboard';
 import { isValidSymbol } from '../config/symbols';
 
 export interface RouteOptions {
   healthService: HealthService;
   processor: PriceProcessor;
+  simulator?: FeedSimulator;
 }
 
-export function buildRoutes(healthService: HealthService, processor: PriceProcessor): FastifyPluginAsync {
+export function buildRoutes(
+  healthService: HealthService,
+  processor: PriceProcessor,
+  simulator?: FeedSimulator
+): FastifyPluginAsync {
   return async (app: FastifyInstance) => {
+    // Operations Visual Dashboard
+    app.get('/', async (req, reply) => {
+      return reply.type('text/html').send(DASHBOARD_HTML);
+    });
+
     // Health probe
     app.get('/health', async () => {
       return healthService.getHealth();
@@ -59,6 +71,23 @@ export function buildRoutes(healthService: HealthService, processor: PriceProces
       }
 
       return snapshot;
+    });
+
+    // Simulation toggle routes
+    app.post('/api/simulate/start', async () => {
+      if (simulator) {
+        simulator.start(150);
+        return { status: 'started', message: 'Internal live feed simulator started' };
+      }
+      return { status: 'unavailable' };
+    });
+
+    app.post('/api/simulate/stop', async () => {
+      if (simulator) {
+        simulator.stop();
+        return { status: 'stopped', message: 'Internal live feed simulator stopped' };
+      }
+      return { status: 'unavailable' };
     });
   };
 }

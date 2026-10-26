@@ -14,6 +14,8 @@ import { buildRoutes } from './api/routes';
 import { NormalizedPriceUpdate, PriceObservation } from './types/market';
 import { logger } from './utils/logger';
 
+import { FeedSimulator } from './engine/feed-simulator';
+
 export class Application {
   public readonly fastify: FastifyInstance;
   public readonly redisManager: RedisManager;
@@ -25,6 +27,7 @@ export class Application {
   public readonly publisher: DownstreamPublisher;
   public downstreamServer!: DownstreamWebSocketServer;
   public readonly healthService: HealthService;
+  public readonly simulator: FeedSimulator;
 
   constructor(private appConfig: AppConfig) {
     this.fastify = Fastify({
@@ -64,6 +67,7 @@ export class Application {
     });
 
     this.healthService = new HealthService(this.upstreamClient, this.redisManager);
+    this.simulator = new FeedSimulator(this.processor);
 
     this.wirePipeline();
   }
@@ -110,7 +114,7 @@ export class Application {
 
     // 3. Setup Fastify plugins and routes
     await this.fastify.register(cors, { origin: true });
-    await this.fastify.register(buildRoutes(this.healthService, this.processor));
+    await this.fastify.register(buildRoutes(this.healthService, this.processor, this.simulator));
 
     // 4. Attach Downstream WebSocket Server to Fastify HTTP server
     this.downstreamServer = new DownstreamWebSocketServer(
@@ -141,6 +145,9 @@ export class Application {
 
   public async shutdown(): Promise<void> {
     logger.info('Initiating graceful shutdown...');
+
+    // 0. Stop simulator if running
+    this.simulator.stop();
 
     // 1. Disconnect upstream WebSocket
     this.upstreamClient.close();
