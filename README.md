@@ -243,15 +243,17 @@ docker compose down
 
 ---
 
-## HTTP REST Endpoints
+## HTTP REST Endpoints & Web Dashboard
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
+| `/` | GET | **Live Operations Trading Terminal**: Interactive real-time UI with live sparklines, range gauges, and payload inspector. |
 | `/health` | GET | Liveness probe returning process uptime and memory usage. |
 | `/ready` | GET | Readiness probe returning upstream status, persistence status, and recovery state. |
 | `/metrics` | GET | Prometheus scrape endpoint with application metrics. |
 | `/api/prices` | GET | Snapshot of all active symbols with latest prices and 24h metrics. |
 | `/api/prices/:symbol` | GET | Snapshot for a specific symbol (e.g. `/api/prices/EURUSD`). |
+| `/api/prices/:symbol/candles` | GET | **Bonus**: Rolling 1-minute OHLC candlesticks for a symbol. |
 | `/api/openapi.json` | GET | Full OpenAPI 3.0 specification for all HTTP routes. |
 
 ---
